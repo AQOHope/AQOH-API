@@ -1,30 +1,25 @@
-from fastapi import FastAPI
-from typing import List, Optional
+from fastapi import Depends, FastAPI
+from .dependencies import get_query_token, get_token_header
+from .internals import admin
+from .routers import  users, items
 
-import pydantic
-
-app = FastAPI()
-
-class Quoter(pydantic.BaseModel):
-    """Represents a book with that you can read from a JSON file."""
-    name: str
-    school: str
-    active: str
+app = FastAPI(dependencies=[Depends(get_query_token)])
 
 
-class Quote(pydantic.BaseModel):
-    """Represents a book with that you can read from a JSON file."""
-
-    quote: str
-    quoter: str
-    tag: Optional[str]
+app.include_router(users.router)
+app.include_router(items.router)
+app.include_router(
+    admin.router,
+    prefix="/admin",
+    tags=["admin"],
+    dependencies=[Depends(get_token_header)],
+    responses={418: {"description": "I'm a teapot"}},
+)
 
 
 @app.get("/")
 async def root():
-    return {"code":418, "message": "I am not the teapot your looking for!"}
-
-
+    return {"message": "Hello Bigger Applications!"}
 
 @app.get("/stoics")
 async def stoics():
